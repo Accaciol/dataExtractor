@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +25,11 @@ public class App
 {
 	
 	// static String jarDirectory = System.getProperty("user.dir");
+	//H:\downloads\BiaTXT\txts
 	static String jarDirectory = "H:\\downloads\\BiaTXT";
 
 	static String userHome = System.getProperty("user.home");
 	static String filePath = jarDirectory + File.separator + "DadosExtraidos" + File.separator;
-//		static String fileTXTPath = System.getProperty("user.home") + File.separator + "DadosExtraidos" + File.separator + "extracted_results.txt";
-	static String fileTXTPath = "H:\\downloads\\BiaTXT\\DadosExtraidos" + File.separator + "extracted_results.txt";
 
 	
     public static void main( String[] args )
@@ -39,7 +37,6 @@ public class App
         System.out.println( "Hello World!" );
 
 		System.out.println("filePath" + filePath);
-		System.out.println("fileTXTPath" + fileTXTPath);
 		// Specify the folder containing the text files
 		String folderPath = jarDirectory; // Use the JAR directory as the folder path
 
@@ -176,16 +173,9 @@ public class App
 						    	resultadoMaiorProf = "0";
 						    }
 						    resultadoMaiorProfPopula = resultadoMaiorProf;
-//						    profundidadeArray.add(resultadoMaiorProf);
 					    	temTemperatura = true;	
 						    
-		//				    temperaturaFundodeArray.add(resultadoMaiorProf); // Adiciona o valor diretamente ao array
 						}
-		
-					      // Verifica se não há temperatura do fundo do poço
-//		                if (!linha.contains("TEMPERATURA FUNDO POCO:")) {
-//		                    temperaturaFundodeArray.add("0"); // Adiciona 0 ao array de temperaturaFundodeArray
-//		                }
 		
 						if (linha.contains("TEMPERATURA FUNDO POCO:")) {
 							// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
@@ -214,7 +204,6 @@ public class App
 						}
 						if(resultadoMaiorProfPopula != null && temTemperatura) {
 							profundidadeArray.add(resultadoMaiorProf);
-//							temperaturaFundodeArray.add(temperaturaTexto);
 							if(temperaturaTexto.isBlank() || temperaturaTexto.isEmpty()) {
 								temperaturaFundodeArray.add("0");
 							}else {
@@ -223,10 +212,9 @@ public class App
 						}
 						temTemperatura = false;
 						
-			}else {
-				
 			}
 			
+				  //TODO Verificar se a regra do LacheBREUNCH é a mesma da temperatura normalse for aplicar a regra de maior profundidade
 				  if (linha.contains("LACHENBRUCH & BREWER")) {
 					    // Extrai as informações após "LACHENBRUCH & BREWER"
 					    String infoAfterKeyword = linha.substring(linha.indexOf("LACHENBRUCH & BREWER") + "LACHENBRUCH & BREWER".length()).trim();
@@ -243,9 +231,9 @@ public class App
 					            if (valor > maiorValor) {
 					                maiorValor = valor; // Atualiza o maior valor
 					                resultadoMaiorValor = infoAfterKeyword; // Atualiza a string do resultado
-//					                double temperatura = Double.parseDouble(resultadoMaiorValor);
-//					                maiorTemperatura = temperatura;
 					                System.out.println(resultadoMaiorValor);
+					                
+					                resultadoMaiorProfPopula = removeLastSpecialCharacter(partes[1].toString());
 					            }
 					        } catch (NumberFormatException e) {
 					            // Lida com o caso em que o valor numérico não pode ser convertido para double
@@ -253,20 +241,20 @@ public class App
 					        }
 					    }
 					}
-				  
-				  if (linha.contains("MAIOR PROF.")) {
-						encontrouMaiorProf2 = true;
-						// Verifica se a linha contém "INICIO"
-						if (linha.contains("INICIO")) {
-							// Extrai o texto entre "MAIOR PROF." e "INICIO"
-							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length(),
-									linha.indexOf("INICIO")).trim();
-						} else {
-							// Se não contiver "INICIO", extrai o "MAIOR PROF."
-							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length())
-									.trim();
-						}
-					}
+//				  
+//				  if (linha.contains("MAIOR PROF.")) {
+//						encontrouMaiorProf2 = true;
+//						// Verifica se a linha contém "INICIO"
+//						if (linha.contains("INICIO")) {
+//							// Extrai o texto entre "MAIOR PROF." e "INICIO"
+//							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length(),
+//									linha.indexOf("INICIO")).trim();
+//						} else {
+//							// Se não contiver "INICIO", extrai o "MAIOR PROF."
+//							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length())
+//									.trim();
+//						}
+//					}
 
 
 				if (encontrouPoco) {
@@ -290,18 +278,10 @@ public class App
 
 			}
 			
-			
-//
-//			int posicaoMaiorProfundidade = buscarMaiorProfundidade(profundidadeArray);
-//			if(posicaoMaiorProfundidade != 0){
-//				String temperaturaFundodeArraytexto = temperaturaFundodeArray.get(posicaoMaiorProfundidade);
-//				maiorTemperatura = Double.parseDouble(temperaturaFundodeArraytexto);
-//			}
-//			if(posicaoMaiorProfundidade != 0){
-//				resultadoMaiorProf = temperaturaFundodeArray.get(posicaoMaiorProfundidade);
-//			}
 			if(!profundidadeArray.isEmpty() || !temperaturaFundodeArray.isEmpty()) {
-				maiorTemperatura = maiorProfundidadeComTemperaturaFundoPoco(profundidadeArray, temperaturaFundodeArray);
+				int posicaoMAior = maiorProfundidadeComTemperaturaFundoPoco(profundidadeArray, temperaturaFundodeArray);
+				maiorTemperatura =  Double.parseDouble(temperaturaFundodeArray.get(posicaoMAior));
+				resultadoMaiorProfPopula = profundidadeArray.get(posicaoMAior);
 			}else {
 				maiorTemperatura = maiorValor;
 			}
@@ -313,13 +293,27 @@ public class App
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		if(resultadoLongitude != null) {
+			resultadoLongitude = filtrarLongitude(resultadoLongitude);			
+		}
+		if(resultadoLatitude != null) {
+			resultadoLatitude = filtrarLatitude(resultadoLatitude);			
+		}
+		if(resultadoBap != null) {
+			resultadoBap = filtrarBAP(resultadoBap);			
+		}
 		
-		
-		gerarArquivoExcel(removeSuffix(fileName, "_"), filtrarLongitude(resultadoLongitude),
-				filtrarLatitude(resultadoLatitude), filtrarBAP(resultadoBap), 
-				resultadoMaiorProf, maiorTemperatura, isLACHENBRUCH );
+		gerarArquivoExcel(removeSuffix(fileName, "_"), resultadoLongitude,
+				resultadoLatitude, resultadoBap, 
+				resultadoMaiorProfPopula, maiorTemperatura, isLACHENBRUCH );
 	}
 	
+	    public static String removeLastSpecialCharacter(String str) {
+	        // Use uma expressão regular para encontrar o último caractere especial
+	        // e removê-lo usando replaceAll()
+	        return str.replaceAll("[^a-zA-Z0-9]+$", "");
+	    }
+
 	
 	public static String remove2Pontos(String resultadoMaiorProf) {
 		// Remove o caractere ":" do início do resultado
@@ -370,80 +364,15 @@ public class App
         return posicaoMaior;
     }
 	
-	public static Double maiorProfundidadeComTemperaturaFundoPoco (List<String> profundidadeArray, List<String> temperaturaFundodeArray) {
+	public static int maiorProfundidadeComTemperaturaFundoPoco (List<String> profundidadeArray, List<String> temperaturaFundodeArray) {
 		int posicaoMaior = 0;
-		for (int i = 1; i < profundidadeArray.size(); i++) {
+		for (int i = 0; i < profundidadeArray.size(); i++) {
             if (Double.parseDouble(profundidadeArray.get(i)) >= Double.parseDouble(profundidadeArray.get(posicaoMaior)) 
             		&& Double.parseDouble(temperaturaFundodeArray.get(i)) > 0) {
                 posicaoMaior = i;
             }
         }
-		return Double.parseDouble(profundidadeArray.get(posicaoMaior));
-	}
-
-	private static void printResults(String resultadoPoco, String resultadoLongitude, String resultadoLatitude,
-	        String resultadoBap, String resultadoMaiorProf, String resultadoLACHENBRUCH_BREWER,
-	        double maiorTemperaturaFundoPoco) {
-	    // Check if any relevant information is found in the file
-	    if (resultadoPoco != null || resultadoLongitude != null || resultadoLatitude != null || resultadoBap != null
-	            || resultadoMaiorProf != null || resultadoLACHENBRUCH_BREWER != null
-	            || maiorTemperaturaFundoPoco != Double.MIN_VALUE) {
-	        System.out.println(" ");
-	        System.out.println(" ");
-	        System.out.println("-------------------------INICIO---------------------------");
-	        if (resultadoPoco != null) {
-	            System.out.println(" " + resultadoPoco);
-	        } else {
-	            System.out.println("Palavra 'POÇO' não encontrada no arquivo.");
-	        }
-
-	        if (resultadoLongitude != null) {
-	            System.out.println("'LONGITUDE      :' " + resultadoLongitude);
-	        } else {
-	            System.out.println("Palavra 'LONGITUDE      :' não encontrada no arquivo.");
-	        }
-
-	        if (resultadoLatitude != null) {
-	            System.out.println(resultadoLatitude);
-	        } else {
-	            System.out.println("Palavra 'LATITUDE' não encontrada no arquivo.");
-	        }
-
-	        if (resultadoBap != null) {
-	            System.out.println(" 'B.A.P': " + resultadoBap);
-	        } else {
-	            System.out.println("Palavra 'B.A.P' não encontrada no arquivo.");
-	        }
-
-	        if (resultadoMaiorProf != null) {
-	            System.out.println(" 'MAIOR PROF.': " + resultadoMaiorProf);
-	        } else {
-	            System.out.println("Palavra 'MAIOR PROF.' não encontrada no arquivo.");
-	        }
-
-//	        if (maiorTemperaturaFundoPoco != Double.MIN_VALUE) {
-//	            double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
-//	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Fahrenheit' = "
-//	                    + maiorTemperaturaFundoPoco);
-//	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Celcius' = " + convertido);
-//
-//	        } else {
-//	            System.out.println("Palavra 'TEMPERATURA FUNDO POCO:' não encontrada no arquivo." + filePath);
-//	        }
-	        if (resultadoLACHENBRUCH_BREWER != null && !resultadoLACHENBRUCH_BREWER.isEmpty()) {
-	            double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
-	            System.out.println(
-	                    "Informações após 'LACHENBRUCH & BREWER' em Fahrenheit': \n" + resultadoLACHENBRUCH_BREWER);
-	            System.out.println("Informações após 'LACHENBRUCH & BREWER' em Celcius': \n\n" + +convertido);
-	        } else {
-	            System.out.println("\n Palavra 'LACHENBRUCH & BREWER' não encontrada no arquivo.");
-	        }
-	        System.out.println(" ");
-	        System.out.println(" ");
-	        System.out.println("-------------------------FIM---------------------------");
-	    } else {
-	        System.out.println("Nenhuma informação relevante encontrada no arquivo.");
-	    }
+		return posicaoMaior;
 	}
 
 
