@@ -83,7 +83,8 @@ public class App
 	    boolean encontrouBap = false;
 	    boolean encontrouMaiorProf = false;
 	    boolean encontrouProfAlcancada = false;
-        boolean novaSecao = true;	    
+        boolean novaSecao = false;
+        boolean primeiraEntradaNovaSecao = true;
         String temperaturaTexto = "";
         boolean temTemperatura = false;
         double maiorValor = Double.MIN_VALUE; // Inicializa o maior valor com o menor valor possível de um double
@@ -91,6 +92,7 @@ public class App
         String resultadoMaiorProf2 = "";
         boolean encontrouMaiorProf2 = false;
         boolean isLACHENBRUCH = false;
+        int contadorBlocos = 0;
 
 	    
 		try (BufferedReader leitor = new BufferedReader(new FileReader(caminhoArquivo))) {
@@ -153,8 +155,8 @@ public class App
 					encontrouBap = false; // Reseta a flag após encontrar
 				}
 
-				  if (linha.contains("------------------------------------------------------------------------------------------------------------------------------------")) {
-			            novaSecao = true;
+				  if (linha.contains("NUMERO CORRIDA:")) {
+			        	  novaSecao = true;
 			        } 
 				  if(novaSecao) {
 						if (linha.contains("PROF. ALCANCADA")) {
@@ -174,11 +176,11 @@ public class App
 						    }
 						    resultadoMaiorProfPopula = resultadoMaiorProf;
 					    	temTemperatura = true;	
+					    	profundidadeArray.add(resultadoMaiorProf);
 						    
 						}
 		
 						if (linha.contains("TEMPERATURA FUNDO POCO:")) {
-							// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
 							temperaturaTexto = linha
 									.substring(linha.indexOf("TEMPERATURA FUNDO POCO:") + "TEMPERATURA FUNDO POCO:".length())
 									.trim();
@@ -186,15 +188,14 @@ public class App
 								try {
 									double temperatura = Double.parseDouble(temperaturaTexto);
 			
-//									temperaturaFundodeArray.add(temperaturaTexto);
 									System.out.println("TEMPERATURA FINAL" + temperaturaFundodeArray);
+									System.out.println(temperaturaTexto);
+									temperaturaFundodeArray.add(temperaturaTexto);
 									
-									// Check if the current temperature is greater than the previous maximum
 									if (temperatura > maiorTemperatura) {
 										maiorTemperatura = temperatura;
 									}
 								} catch (NumberFormatException e) {
-									// Handle the case where the temperature value is not a valid double
 									System.err.println("Error parsing temperature value: " + temperaturaTexto);
 								}
 							}else {
@@ -202,15 +203,15 @@ public class App
 							}
 							
 						}
-						if(resultadoMaiorProfPopula != null && temTemperatura) {
-							profundidadeArray.add(resultadoMaiorProf);
-							if(temperaturaTexto.isBlank() || temperaturaTexto.isEmpty()) {
-								temperaturaFundodeArray.add("0");
-							}else {
-								temperaturaFundodeArray.add(temperaturaTexto);
+							if(resultadoMaiorProfPopula != null && temTemperatura && !temperaturaTexto.isEmpty()) {
+								if(temperaturaTexto.isBlank() || temperaturaTexto.isEmpty()) {
+									temperaturaFundodeArray.add("00000000");
+								}else {
+//									temperaturaFundodeArray.add(temperaturaTexto);
+								}
 							}
-						}
-						temTemperatura = false;
+							temTemperatura = false;
+//						}
 						
 			}
 			
@@ -241,21 +242,6 @@ public class App
 					        }
 					    }
 					}
-//				  
-//				  if (linha.contains("MAIOR PROF.")) {
-//						encontrouMaiorProf2 = true;
-//						// Verifica se a linha contém "INICIO"
-//						if (linha.contains("INICIO")) {
-//							// Extrai o texto entre "MAIOR PROF." e "INICIO"
-//							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length(),
-//									linha.indexOf("INICIO")).trim();
-//						} else {
-//							// Se não contiver "INICIO", extrai o "MAIOR PROF."
-//							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length())
-//									.trim();
-//						}
-//					}
-
 
 				if (encontrouPoco) {
 					resultadoPoco = linha; // Salva o texto que vem após "POÇO"
