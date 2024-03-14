@@ -75,7 +75,8 @@ public class App
 	    String resultadoLongitude = null;
 	    String resultadoLatitude = null;
 	    String resultadoBap = null;
-	    String resultadoMaiorProf = null;
+	    String resultadoMaiorProf = "";
+	    String resultadoMaiorProfPopula = null;	    
 	    String resultadoLACHENBRUCH_BREWER = null;
 	    Double maiorTemperatura = Double.MIN_VALUE; // Initialize with the smallest possible value
 	    Double profundidadeAlcancada = Double.MIN_VALUE; // Initialize with the smallest possible value
@@ -85,7 +86,16 @@ public class App
 	    boolean encontrouBap = false;
 	    boolean encontrouMaiorProf = false;
 	    boolean encontrouProfAlcancada = false;
-		
+        boolean novaSecao = true;	    
+        String temperaturaTexto = "";
+        boolean temTemperatura = false;
+        double maiorValor = Double.MIN_VALUE; // Inicializa o maior valor com o menor valor possível de um double
+        String resultadoMaiorValor = ""; // Inicializa a string do resultado com uma string vazia
+        String resultadoMaiorProf2 = "";
+        boolean encontrouMaiorProf2 = false;
+        boolean isLACHENBRUCH = false;
+
+	    
 		try (BufferedReader leitor = new BufferedReader(new FileReader(caminhoArquivo))) {
 			String linha;
 
@@ -146,75 +156,118 @@ public class App
 					encontrouBap = false; // Reseta a flag após encontrar
 				}
 
+				  if (linha.contains("------------------------------------------------------------------------------------------------------------------------------------")) {
+			            novaSecao = true;
+			        } 
+				  if(novaSecao) {
+						if (linha.contains("PROF. ALCANCADA")) {
+						    encontrouMaiorProf = true;
+						    int indiceInicio = linha.indexOf("PROF. ALCANCADA") + "PROF. ALCANCADA".length();
+						    int indiceFim = linha.indexOf("(");
 		
-				if (linha.contains("PROF. ALCANCADA")) {
-				    encontrouMaiorProf = true;
-				    int indiceInicio = linha.indexOf("PROF. ALCANCADA") + "PROF. ALCANCADA".length();
-				    int indiceFim = linha.indexOf("(");
-
-				    if (indiceFim != -1) { // Se houver "(" na linha
-				        resultadoMaiorProf = linha.substring(indiceInicio, indiceFim).trim();
-				        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
-				    } else { // Se não houver "(" na linha
-				        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
-				        resultadoMaiorProf = linha.substring(indiceInicio).trim();
-				    }
-				    if(resultadoMaiorProf.isBlank() || resultadoMaiorProf.isEmpty()) {
-				    	resultadoMaiorProf = "0";
-				    }
-				    profundidadeArray.add(resultadoMaiorProf);
-			    	boolean temTemperatura = true;	
-				    
-//				    temperaturaFundodeArray.add(resultadoMaiorProf); // Adiciona o valor diretamente ao array
-				}
-
-
-
-				if (linha.contains("TEMPERATURA FUNDO POCO:")) {
-					// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
-					String temperaturaTexto = linha
-							.substring(linha.indexOf("TEMPERATURA FUNDO POCO:") + "TEMPERATURA FUNDO POCO:".length())
-							.trim();
-					if (temperaturaTexto != null && !temperaturaTexto.isEmpty()) {
-						try {
-							double temperatura = Double.parseDouble(temperaturaTexto);
-	
-							temperaturaFundodeArray.add(temperaturaTexto);
-							System.out.println("TEMPERATURA FINAL" + temperaturaFundodeArray);
-							
-							// Check if the current temperature is greater than the previous maximum
-							if (temperatura > maiorTemperatura) {
-								maiorTemperatura = temperatura;
-							}
-						} catch (NumberFormatException e) {
-							// Handle the case where the temperature value is not a valid double
-							System.err.println("Error parsing temperature value: " + temperaturaTexto);
+						    if (indiceFim != -1) { // Se houver "(" na linha
+						        resultadoMaiorProf = linha.substring(indiceInicio, indiceFim).trim();
+						        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
+						    } else { // Se não houver "(" na linha
+						        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
+						        resultadoMaiorProf = linha.substring(indiceInicio).trim();
+						    }
+						    if(resultadoMaiorProf.isBlank() || resultadoMaiorProf.isEmpty()) {
+						    	resultadoMaiorProf = "0";
+						    }
+						    resultadoMaiorProfPopula = resultadoMaiorProf;
+//						    profundidadeArray.add(resultadoMaiorProf);
+					    	temTemperatura = true;	
+						    
+		//				    temperaturaFundodeArray.add(resultadoMaiorProf); // Adiciona o valor diretamente ao array
 						}
-					}else {
-						temperaturaFundodeArray.add("0");
+		
+					      // Verifica se não há temperatura do fundo do poço
+//		                if (!linha.contains("TEMPERATURA FUNDO POCO:")) {
+//		                    temperaturaFundodeArray.add("0"); // Adiciona 0 ao array de temperaturaFundodeArray
+//		                }
+		
+						if (linha.contains("TEMPERATURA FUNDO POCO:")) {
+							// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
+							temperaturaTexto = linha
+									.substring(linha.indexOf("TEMPERATURA FUNDO POCO:") + "TEMPERATURA FUNDO POCO:".length())
+									.trim();
+							if (temperaturaTexto != null && !temperaturaTexto.isEmpty()) {
+								try {
+									double temperatura = Double.parseDouble(temperaturaTexto);
+			
+//									temperaturaFundodeArray.add(temperaturaTexto);
+									System.out.println("TEMPERATURA FINAL" + temperaturaFundodeArray);
+									
+									// Check if the current temperature is greater than the previous maximum
+									if (temperatura > maiorTemperatura) {
+										maiorTemperatura = temperatura;
+									}
+								} catch (NumberFormatException e) {
+									// Handle the case where the temperature value is not a valid double
+									System.err.println("Error parsing temperature value: " + temperaturaTexto);
+								}
+							}else {
+								temperaturaFundodeArray.add("0");
+							}
+							
+						}
+						if(resultadoMaiorProfPopula != null && temTemperatura) {
+							profundidadeArray.add(resultadoMaiorProf);
+//							temperaturaFundodeArray.add(temperaturaTexto);
+							if(temperaturaTexto.isBlank() || temperaturaTexto.isEmpty()) {
+								temperaturaFundodeArray.add("0");
+							}else {
+								temperaturaFundodeArray.add(temperaturaTexto);
+							}
+						}
+						temTemperatura = false;
+						
+			}else {
+				
+			}
+			
+				  if (linha.contains("LACHENBRUCH & BREWER")) {
+					    // Extrai as informações após "LACHENBRUCH & BREWER"
+					    String infoAfterKeyword = linha.substring(linha.indexOf("LACHENBRUCH & BREWER") + "LACHENBRUCH & BREWER".length()).trim();
+
+					    // Divide a linha em partes usando espaços em branco como delimitador
+					    String[] partes = infoAfterKeyword.split("\\s+");
+
+					    // Obtém o valor da terceira parte (o valor numérico)
+					    if (partes.length >= 3) {
+					        try {
+					            double valor = Double.parseDouble(partes[0]); // Obtém o valor numérico
+
+					            // Verifica se o valor atual é maior que o maior valor registrado até agora
+					            if (valor > maiorValor) {
+					                maiorValor = valor; // Atualiza o maior valor
+					                resultadoMaiorValor = infoAfterKeyword; // Atualiza a string do resultado
+//					                double temperatura = Double.parseDouble(resultadoMaiorValor);
+//					                maiorTemperatura = temperatura;
+					                System.out.println(resultadoMaiorValor);
+					            }
+					        } catch (NumberFormatException e) {
+					            // Lida com o caso em que o valor numérico não pode ser convertido para double
+					            System.err.println("Erro ao converter o valor para double: " + partes[2]);
+					        }
+					    }
 					}
-					
-				}
-				
-				// Check if the line contains "LACHENBRUCH & BREWER"
-				if (linha.contains("LACHENBRUCH & BREWER")) {
-					// Extract the information after "LACHENBRUCH & BREWER"
-					String infoAfterKeyword = linha
-							.substring(linha.indexOf("LACHENBRUCH & BREWER") + "LACHENBRUCH & BREWER".length()).trim();
+				  
+				  if (linha.contains("MAIOR PROF.")) {
+						encontrouMaiorProf2 = true;
+						// Verifica se a linha contém "INICIO"
+						if (linha.contains("INICIO")) {
+							// Extrai o texto entre "MAIOR PROF." e "INICIO"
+							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length(),
+									linha.indexOf("INICIO")).trim();
+						} else {
+							// Se não contiver "INICIO", extrai o "MAIOR PROF."
+							resultadoMaiorProf2 = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length())
+									.trim();
+						}
+					}
 
-					// Accumulate the extracted information
-					resultadoLACHENBRUCH_BREWER += infoAfterKeyword + "\n";
-				}
-				
-				if (maiorTemperatura != Double.MIN_VALUE) {
-		            double convertido = converterFahrenheitParaCelsius(maiorTemperatura);
-		            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Fahrenheit' = "
-		                    + maiorTemperatura);
-		            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Celcius' = " + convertido);
-
-		        } else {
-		            System.out.println("Palavra 'TEMPERATURA FUNDO POCO:' não encontrada no arquivo.");
-		        }
 
 				if (encontrouPoco) {
 					resultadoPoco = linha; // Salva o texto que vem após "POÇO"
@@ -236,6 +289,8 @@ public class App
 	            }
 
 			}
+			
+			
 //
 //			int posicaoMaiorProfundidade = buscarMaiorProfundidade(profundidadeArray);
 //			if(posicaoMaiorProfundidade != 0){
@@ -248,16 +303,21 @@ public class App
 			if(!profundidadeArray.isEmpty() || !temperaturaFundodeArray.isEmpty()) {
 				maiorTemperatura = maiorProfundidadeComTemperaturaFundoPoco(profundidadeArray, temperaturaFundodeArray);
 			}else {
-//				maiorTemperatura = Double.parseDouble(resultadoLACHENBRUCH_BREWER);
+				maiorTemperatura = maiorValor;
+			}
+			if(resultadoMaiorProf.isEmpty()) {
+				resultadoMaiorProf = remove2Pontos(resultadoMaiorProf2);
+				isLACHENBRUCH = true;
 			}
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
+		
 		gerarArquivoExcel(removeSuffix(fileName, "_"), filtrarLongitude(resultadoLongitude),
 				filtrarLatitude(resultadoLatitude), filtrarBAP(resultadoBap), 
-				resultadoMaiorProf, maiorTemperatura);
+				resultadoMaiorProf, maiorTemperatura, isLACHENBRUCH );
 	}
 	
 	
@@ -361,15 +421,15 @@ public class App
 	            System.out.println("Palavra 'MAIOR PROF.' não encontrada no arquivo.");
 	        }
 
-	        if (maiorTemperaturaFundoPoco != Double.MIN_VALUE) {
-	            double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
-	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Fahrenheit' = "
-	                    + maiorTemperaturaFundoPoco);
-	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Celcius' = " + convertido);
-
-	        } else {
-	            System.out.println("Palavra 'TEMPERATURA FUNDO POCO:' não encontrada no arquivo.");
-	        }
+//	        if (maiorTemperaturaFundoPoco != Double.MIN_VALUE) {
+//	            double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
+//	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Fahrenheit' = "
+//	                    + maiorTemperaturaFundoPoco);
+//	            System.out.println("Maior valor de 'TEMPERATURA FUNDO POCO: em Celcius' = " + convertido);
+//
+//	        } else {
+//	            System.out.println("Palavra 'TEMPERATURA FUNDO POCO:' não encontrada no arquivo." + filePath);
+//	        }
 	        if (resultadoLACHENBRUCH_BREWER != null && !resultadoLACHENBRUCH_BREWER.isEmpty()) {
 	            double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
 	            System.out.println(
@@ -385,65 +445,10 @@ public class App
 	        System.out.println("Nenhuma informação relevante encontrada no arquivo.");
 	    }
 	}
-	private static void printResultsToFileTXT(String resultadoPoco, String resultadoLongitude, String resultadoLatitude,
-			String resultadoBap, String resultadoMaiorProf, String resultadoLACHENBRUCH_BREWER,
-			double maiorTemperaturaFundoPoco, String fileName) {
 
-		try {
-			// Verifique se a pasta DadosExtraidos existe; se não, crie-a
-			File directory = new File(filePath);
-			if (!directory.exists()) {
-				directory.mkdir();
-				System.out.println("Caminho criado.");
-			} else {
-				System.out.println("Caminho já existe.");
-			}
-			// Caminho do arquivo completo, incluindo o nome do arquivo
-			String fullFilePath = filePath + "extracted_results.txt";
-//			    Path filePath = Paths.get(folderPath);
-
-//		        String fileName = filePath.getFileName().toString(); // Extract the file name from the path
-
-			// Cria o BufferedWriter para o arquivo
-			try (BufferedWriter writer = new BufferedWriter(new FileWriter(fullFilePath, true))) {
-				writer.write("------------------------------------------------------------------------------\n");
-				writer.write("------------------------------------------------------------------------------\n");
-				writer.write("-------------------------INICIO DO "+fileName+"---------------------------\n\n");
-				writeResultToFile(writer, "NOME DO ARQUIVO:", fileName);
-				writeResultToFile(writer, " 'LONGITUDE' :", resultadoLongitude);
-				writeResultToFile(writer, "", resultadoLatitude + ")");
-				writeResultToFile(writer, " 'B.A.P' :", resultadoBap);
-				writeResultToFile(writer, " 'MAIOR PROF. :", resultadoMaiorProf);
-
-				if (maiorTemperaturaFundoPoco != Double.MIN_VALUE) {
-					double convertido = converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco);
-					writer.write("Maior valor de 'TEMPERATURA FUNDO POCO:': " + maiorTemperaturaFundoPoco
-							+ "  Fahrenheit \n");
-					writer.write("Maior valor de 'TEMPERATURA FUNDO POCO:': " + convertido + " Celcius \n");
-
-				} else {
-					writer.write("Palavra 'TEMPERATURA FUNDO POCO:' não encontrada no arquivo.\n");
-				}
-
-				if (resultadoLACHENBRUCH_BREWER != null && !resultadoLACHENBRUCH_BREWER.isEmpty()) {
-					writer.write("Informações após 'LACHENBRUCH & BREWER':\n" + resultadoLACHENBRUCH_BREWER);
-//			            writer.write("Informações após 'LACHENBRUCH & BREWER':\n" + resultadoLACHENBRUCH_BREWER);
-				} else {
-					writer.write("Palavra 'LACHENBRUCH & BREWER' não encontrada no arquivo.\n");
-				}
-				writer.write("-------------------------FIM DO "+fileName+"---------------------------\n");
-				writer.write("------------------------------------------------------------------------------\n");
-				writer.write("------------------------------------------------------------------------------\n\n\n\n");
-			}
-			
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	private static void gerarArquivoExcel(String fileName, String resultadoLongitude, String resultadoLatitude,
-	        String resultadoBap, String resultadoMaiorProf, double maiorTemperaturaFundoPoco) {
+	        String resultadoBap, String resultadoMaiorProf, double maiorTemperaturaFundoPoco, boolean isLACHENBRUCH) {
 	    String fullFilePath = filePath + "extracted_results.xls";
 	    Workbook workbook;
 	    Sheet sheet;
@@ -469,7 +474,9 @@ public class App
 	        headerRow.createCell(2).setCellValue("Latitude");
 	        headerRow.createCell(3).setCellValue("B.A.P");
 	        headerRow.createCell(4).setCellValue("Maior Profundidade Alcançada");
-	        headerRow.createCell(5).setCellValue("Maior Temperatura do Fundo do Poço (Fahrenheit)");
+	        headerRow.createCell(5).setCellValue("Maior Temp. do Fundo do Poço (Fahrenheit)");
+	        headerRow.createCell(6).setCellValue("Maior Temp. do Fundo do Poço (celcius)");
+	        headerRow.createCell(7).setCellValue("isLACHENBRUCH/MAIOR PROF");  //TODO
 	    }
 
 	    int lastRowNum = sheet.getLastRowNum();
@@ -483,6 +490,13 @@ public class App
 	    dataRow.createCell(3).setCellValue(resultadoBap);
 	    dataRow.createCell(4).setCellValue(resultadoMaiorProf);
 	    dataRow.createCell(5).setCellValue(maiorTemperaturaFundoPoco);
+	    dataRow.createCell(6).setCellValue(converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco));
+	    if (isLACHENBRUCH) {
+	        dataRow.createCell(7).setCellValue("X");
+	    } else {
+	        dataRow.createCell(7).setCellValue("");
+	    }
+
 
 	    try (FileOutputStream fileOut = new FileOutputStream(fullFilePath)) {
 	        workbook.write(fileOut);
