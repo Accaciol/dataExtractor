@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +33,7 @@ public class App
 //		static String fileTXTPath = System.getProperty("user.home") + File.separator + "DadosExtraidos" + File.separator + "extracted_results.txt";
 	static String fileTXTPath = "H:\\downloads\\BiaTXT\\DadosExtraidos" + File.separator + "extracted_results.txt";
 
+	
     public static void main( String[] args )
     {
         System.out.println( "Hello World!" );
@@ -74,18 +77,21 @@ public class App
 	    String resultadoBap = null;
 	    String resultadoMaiorProf = null;
 	    String resultadoLACHENBRUCH_BREWER = null;
-	    double maiorTemperatura = Double.MIN_VALUE; // Initialize with the smallest possible value
-	    double profundidadeAlcancada = Double.MIN_VALUE; // Initialize with the smallest possible value
+	    Double maiorTemperatura = Double.MIN_VALUE; // Initialize with the smallest possible value
+	    Double profundidadeAlcancada = Double.MIN_VALUE; // Initialize with the smallest possible value
 	    boolean encontrouPoco = false;
 	    boolean encontrouLongitude = false;
 	    boolean encontrouLatitude = false;
 	    boolean encontrouBap = false;
 	    boolean encontrouMaiorProf = false;
 	    boolean encontrouProfAlcancada = false;
-
+		
 		try (BufferedReader leitor = new BufferedReader(new FileReader(caminhoArquivo))) {
 			String linha;
 
+			List<String> profundidadeArray = new ArrayList<>();
+			List<String> temperaturaFundodeArray = new ArrayList<>();		
+		
 			while ((linha = leitor.readLine()) != null) {
 
 				if (linha.contains(" POÇO           :")) {
@@ -140,24 +146,56 @@ public class App
 					encontrouBap = false; // Reseta a flag após encontrar
 				}
 
-				if (linha.contains("MAIOR PROF.")) {
+		
+				if (linha.contains("PROF. ALCANCADA")) {
 				    encontrouMaiorProf = true;
-				    int indiceInicio = linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length();
-				    int indiceFim = linha.indexOf("INICIO");
-				    
-				    if (indiceFim != -1) { // Se houver "INICIO" na linha
+				    int indiceInicio = linha.indexOf("PROF. ALCANCADA") + "PROF. ALCANCADA".length();
+				    int indiceFim = linha.indexOf("(");
+
+				    if (indiceFim != -1) { // Se houver "(" na linha
 				        resultadoMaiorProf = linha.substring(indiceInicio, indiceFim).trim();
-				    } else { // Se não houver "INICIO" na linha
+				        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
+				    } else { // Se não houver "(" na linha
+				        resultadoMaiorProf = remove2Pontos(resultadoMaiorProf);
 				        resultadoMaiorProf = linha.substring(indiceInicio).trim();
 				    }
-				    
-				    // Remove o caractere ":" do início do resultado
-				    if (resultadoMaiorProf.startsWith(":")) {
-				        resultadoMaiorProf = resultadoMaiorProf.substring(1).trim();
+				    if(resultadoMaiorProf.isBlank() || resultadoMaiorProf.isEmpty()) {
+				    	resultadoMaiorProf = "0";
 				    }
+				    profundidadeArray.add(resultadoMaiorProf);
+			    	boolean temTemperatura = true;	
+				    
+//				    temperaturaFundodeArray.add(resultadoMaiorProf); // Adiciona o valor diretamente ao array
 				}
 
 
+
+				if (linha.contains("TEMPERATURA FUNDO POCO:")) {
+					// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
+					String temperaturaTexto = linha
+							.substring(linha.indexOf("TEMPERATURA FUNDO POCO:") + "TEMPERATURA FUNDO POCO:".length())
+							.trim();
+					if (temperaturaTexto != null && !temperaturaTexto.isEmpty()) {
+						try {
+							double temperatura = Double.parseDouble(temperaturaTexto);
+	
+							temperaturaFundodeArray.add(temperaturaTexto);
+							System.out.println("TEMPERATURA FINAL" + temperaturaFundodeArray);
+							
+							// Check if the current temperature is greater than the previous maximum
+							if (temperatura > maiorTemperatura) {
+								maiorTemperatura = temperatura;
+							}
+						} catch (NumberFormatException e) {
+							// Handle the case where the temperature value is not a valid double
+							System.err.println("Error parsing temperature value: " + temperaturaTexto);
+						}
+					}else {
+						temperaturaFundodeArray.add("0");
+					}
+					
+				}
+				
 				// Check if the line contains "LACHENBRUCH & BREWER"
 				if (linha.contains("LACHENBRUCH & BREWER")) {
 					// Extract the information after "LACHENBRUCH & BREWER"
@@ -166,25 +204,6 @@ public class App
 
 					// Accumulate the extracted information
 					resultadoLACHENBRUCH_BREWER += infoAfterKeyword + "\n";
-				}
-
-				if (linha.contains("TEMPERATURA FUNDO POCO:")) {
-					// Extract the temperature value after "TEMPERATURA FUNDO POCO::"
-					String temperaturaTexto = linha
-							.substring(linha.indexOf("TEMPERATURA FUNDO POCO:") + "TEMPERATURA FUNDO POCO:".length())
-							.trim();
-
-					try {
-						double temperatura = Double.parseDouble(temperaturaTexto);
-
-						// Check if the current temperature is greater than the previous maximum
-						if (temperatura > maiorTemperatura) {
-							maiorTemperatura = temperatura;
-						}
-					} catch (NumberFormatException e) {
-						// Handle the case where the temperature value is not a valid double
-						System.err.println("Error parsing temperature value: " + temperaturaTexto);
-					}
 				}
 				
 				if (maiorTemperatura != Double.MIN_VALUE) {
@@ -212,26 +231,44 @@ public class App
 				
 				if (encontrouProfAlcancada) {
 	                resultadoMaiorProf = "PROF. ALCANCADA: " + linha.trim(); // Salva o texto que vem após "PROF. ALCANCADA:"
+//	                profundidadeArray.add(resultadoMaiorProf);
 	                encontrouProfAlcancada = false; // Reseta a flag após encontrar
 	            }
 
 			}
+//
+//			int posicaoMaiorProfundidade = buscarMaiorProfundidade(profundidadeArray);
+//			if(posicaoMaiorProfundidade != 0){
+//				String temperaturaFundodeArraytexto = temperaturaFundodeArray.get(posicaoMaiorProfundidade);
+//				maiorTemperatura = Double.parseDouble(temperaturaFundodeArraytexto);
+//			}
+//			if(posicaoMaiorProfundidade != 0){
+//				resultadoMaiorProf = temperaturaFundodeArray.get(posicaoMaiorProfundidade);
+//			}
+			if(!profundidadeArray.isEmpty() || !temperaturaFundodeArray.isEmpty()) {
+				maiorTemperatura = maiorProfundidadeComTemperaturaFundoPoco(profundidadeArray, temperaturaFundodeArray);
+			}else {
+//				maiorTemperatura = Double.parseDouble(resultadoLACHENBRUCH_BREWER);
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-////		printResultsToFileTXT(resultadoPoco, resultadoLongitude, resultadoLatitude, resultadoBap, resultadoMaiorProf,
-////				resultadoLACHENBRUCH_BREWER, maiorTemperatura, removeSuffix(fileName, "_"));
-////
-//		printResults(resultadoPoco, resultadoLongitude, resultadoLatitude, resultadoBap, resultadoMaiorProf,
-//				resultadoLACHENBRUCH_BREWER, maiorTemperatura);
-//		
+		
 		gerarArquivoExcel(removeSuffix(fileName, "_"), filtrarLongitude(resultadoLongitude),
 				filtrarLatitude(resultadoLatitude), filtrarBAP(resultadoBap), 
 				resultadoMaiorProf, maiorTemperatura);
 	}
 	
 	
+	public static String remove2Pontos(String resultadoMaiorProf) {
+		// Remove o caractere ":" do início do resultado
+	    if (resultadoMaiorProf.startsWith(":")) {
+	        resultadoMaiorProf = resultadoMaiorProf.substring(1).trim();
+//	        profundidadeArray.add(resultadoMaiorProf);
+	    }
+	 return resultadoMaiorProf;   
+	}
 
 	private static String filtrarResultadeMP(String resultadoMaiorProf) {
 	        // Monta o padrão regex para encontrar o valor entre "PROF. ALCANCADA:" e "("
@@ -262,6 +299,27 @@ public class App
 	    return resultadoLongitudeSplit[0]; // Retorna o primeiro elemento do array
 	}
 
+	
+	public static int buscarMaiorProfundidade(List<String> profundidadeArray) {
+        int posicaoMaior = 0;
+        for (int i = 1; i < profundidadeArray.size(); i++) {
+            if (Double.parseDouble(profundidadeArray.get(i)) >= Double.parseDouble(profundidadeArray.get(posicaoMaior))) {
+                posicaoMaior = i;
+            }
+        }
+        return posicaoMaior;
+    }
+	
+	public static Double maiorProfundidadeComTemperaturaFundoPoco (List<String> profundidadeArray, List<String> temperaturaFundodeArray) {
+		int posicaoMaior = 0;
+		for (int i = 1; i < profundidadeArray.size(); i++) {
+            if (Double.parseDouble(profundidadeArray.get(i)) >= Double.parseDouble(profundidadeArray.get(posicaoMaior)) 
+            		&& Double.parseDouble(temperaturaFundodeArray.get(i)) > 0) {
+                posicaoMaior = i;
+            }
+        }
+		return Double.parseDouble(profundidadeArray.get(posicaoMaior));
+	}
 
 	private static void printResults(String resultadoPoco, String resultadoLongitude, String resultadoLatitude,
 	        String resultadoBap, String resultadoMaiorProf, String resultadoLACHENBRUCH_BREWER,
