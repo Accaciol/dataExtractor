@@ -88,6 +88,9 @@ public class App {
 		String resultadoMaiorProf2 = "";
 		boolean encontrouMaiorProf2 = false;
 		boolean isLACHENBRUCH = false;
+		boolean encontrouMaiorProfundidadeCasoVazio = false;
+		
+		String maiorProfundidadeCasoVazio = ""; //profundidade usada caso n tenha nos outros casos 
 
 		try (BufferedReader leitor = new BufferedReader(new FileReader(caminhoArquivo))) {
 			String linha;
@@ -264,6 +267,26 @@ public class App {
 //	                profundidadeArray.add(resultadoMaiorProf);
 					encontrouProfAlcancada = false; // Reseta a flag após encontrar
 				}
+				
+
+				if (linha.contains("MAIOR PROF.")) {
+					encontrouMaiorProfundidadeCasoVazio = true;
+					// Verifica se a linha contém "INICIO"   maiorProfundidadeCasoVazio
+					if (linha.contains("INICIO")) {
+						// Extrai o texto entre "MAIOR PROF." e "INICIO"
+						maiorProfundidadeCasoVazio = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length(),
+								linha.indexOf("INICIO")).trim();
+
+						maiorProfundidadeCasoVazio = formatarMaiorProfundidadeCasoVazio(maiorProfundidadeCasoVazio);
+						
+					} else {
+						// Se não contiver "INICIO", extrai o "MAIOR PROF."
+						maiorProfundidadeCasoVazio = linha.substring(linha.indexOf("MAIOR PROF.") + "MAIOR PROF.".length())
+								.trim();
+						
+						maiorProfundidadeCasoVazio = formatarMaiorProfundidadeCasoVazio(maiorProfundidadeCasoVazio);
+					}
+				}
 
 			}
 
@@ -278,6 +301,7 @@ public class App {
 				resultadoMaiorProf = remove2Pontos(resultadoMaiorProf2);
 				isLACHENBRUCH = true;
 			}
+			
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -293,9 +317,17 @@ public class App {
 		}
 
 		gerarArquivoExcel(removeSuffix(fileName, "_"), resultadoLongitude, resultadoLatitude, resultadoBap,
-				resultadoMaiorProfPopula, maiorTemperatura, isLACHENBRUCH);
+				resultadoMaiorProfPopula, maiorTemperatura, isLACHENBRUCH, maiorProfundidadeCasoVazio);
 	}
 
+	private static String formatarMaiorProfundidadeCasoVazio(String maiorProfundidadeCasoVazio) {
+	    // Remove os espaços em branco, o caractere ":" e quaisquer outros caracteres não visíveis do início da string
+	    return maiorProfundidadeCasoVazio.trim().replaceFirst("^\\s*[:\\s]*", "");
+	}
+
+	
+
+	
 	public static String removeLastSpecialCharacter(String str) {
 		// Use uma expressão regular para encontrar o último caractere especial
 		// e removê-lo usando replaceAll()
@@ -364,7 +396,7 @@ public class App {
 	}
 
 	private static void gerarArquivoExcel(String fileName, String resultadoLongitude, String resultadoLatitude,
-			String resultadoBap, String resultadoMaiorProf, double maiorTemperaturaFundoPoco, boolean isLACHENBRUCH) {
+			String resultadoBap, String resultadoMaiorProf, double maiorTemperaturaFundoPoco, boolean isLACHENBRUCH, String maiorProfundidadeCasoVazio) {
 		String fullFilePath = filePath + "extracted_results.xls";
 		Workbook workbook;
 		Sheet sheet;
@@ -404,8 +436,16 @@ public class App {
 		dataRow.createCell(1).setCellValue(resultadoLongitude);
 		dataRow.createCell(2).setCellValue(resultadoLatitude);
 		dataRow.createCell(3).setCellValue(resultadoBap);
-		dataRow.createCell(4).setCellValue(resultadoMaiorProf);
-		dataRow.createCell(5).setCellValue(maiorTemperaturaFundoPoco);
+		if(resultadoMaiorProf == null || resultadoMaiorProf.isEmpty()) {
+			dataRow.createCell(4).setCellValue(maiorProfundidadeCasoVazio);
+		}else {
+			dataRow.createCell(4).setCellValue(resultadoMaiorProf);
+		}
+		if(!(maiorTemperaturaFundoPoco == 0) ) {
+			dataRow.createCell(5).setCellValue(maiorTemperaturaFundoPoco);
+		}else {
+			dataRow.createCell(5).setCellValue("N/A");
+		}
 		dataRow.createCell(6).setCellValue(converterFahrenheitParaCelsius(maiorTemperaturaFundoPoco));
 		if (isLACHENBRUCH) {
 			dataRow.createCell(7).setCellValue("X");
