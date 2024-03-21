@@ -143,14 +143,16 @@ public class App {
 					int indexPF = linha.indexOf("P.F.SONDADOR");
 					if (indexPF != -1) {
 						resultadoBap = linha.substring(linha.indexOf("B.A.P"), indexPF).trim();
+						resultadoBap = removerCaractereMenos(resultadoBap);
 					} else {
 						// Se não encontrar "P.F.SONDADOR", pega o texto completo após "B.A.P"
 						resultadoBap = linha.substring(linha.indexOf("B.A.P")).trim();
+						resultadoBap = removerCaractereMenos(resultadoBap);
 					}
 				}
 
 				if (encontrouBap) {
-					resultadoBap = linha; // Salva o texto que vem após "B.A.P"
+					//resultadoBap = linha; // Salva o texto que vem após "B.A.P"
 					encontrouBap = false; // Reseta a flag após encontrar
 				}
 
@@ -361,7 +363,7 @@ public class App {
 	private static String filtrarBAP(String resultadoBap) {
 		String[] resultadoBAPSplit;
 		resultadoBAPSplit = resultadoBap.split("\\s+");
-		return resultadoBAPSplit[3]; // Retorna o primeiro elemento do array
+		return resultadoBAPSplit[2]; // Retorna o primeiro elemento do array
 	}
 
 	private static String filtrarLongitude(String resultadoLongitude) {
@@ -382,6 +384,23 @@ public class App {
 		}
 		return posicaoMaior;
 	}
+	
+	
+	public static double converterParaDouble(String texto) {
+	    try {
+	        // Tenta converter a string para double
+	    	if(texto != null && !texto.isBlank() && !texto.isEmpty()) {
+	    		return Double.parseDouble(texto);	
+	    	}else {
+	    		return 0.0;
+	    	}
+	    } catch (NumberFormatException e) {
+	        // Em caso de erro na conversão, imprime o erro e retorna 0.0
+	        System.err.println("Erro ao converter para double: " + e.getMessage());
+	        return 0.0; // Ou qualquer outro valor padrão que você preferir
+	    }
+	}
+
 
 	public static int maiorProfundidadeComTemperaturaFundoPoco(List<String> profundidadeArray,
 			List<String> temperaturaFundodeArray) {
@@ -401,7 +420,21 @@ public class App {
 		Workbook workbook;
 		Sheet sheet;
 		File file = new File(fullFilePath);
-
+		Double longitudeDouble = 0.0;
+		Double latitudeDouble = 0.0;
+		Double bapDouble = 0.0;
+		Double maiorProfDouble = 0.0;
+		
+		
+		longitudeDouble = converterParaDouble(resultadoLongitude);
+		latitudeDouble = converterParaDouble(resultadoLatitude);
+		bapDouble = converterParaDouble(resultadoBap);
+		if(resultadoMaiorProf == null || resultadoMaiorProf.isEmpty()) {
+			maiorProfDouble = converterParaDouble(maiorProfundidadeCasoVazio);
+		}else {
+			maiorProfDouble = converterParaDouble(resultadoMaiorProf);
+		}
+		
 		// If the file already exists, open it and get the existing workbook
 		if (file.exists()) {
 			try (FileInputStream fis = new FileInputStream(file)) {
@@ -433,15 +466,12 @@ public class App {
 		Row dataRow = sheet.createRow(lastRowNum + 1);
 
 		dataRow.createCell(0).setCellValue(fileName);
-		dataRow.createCell(1).setCellValue(resultadoLongitude);
-		dataRow.createCell(2).setCellValue(resultadoLatitude);
-		dataRow.createCell(3).setCellValue(resultadoBap);
-		if(resultadoMaiorProf == null || resultadoMaiorProf.isEmpty()) {
-			dataRow.createCell(4).setCellValue(maiorProfundidadeCasoVazio);
-		}else {
-			dataRow.createCell(4).setCellValue(resultadoMaiorProf);
-		}
-		if(!(maiorTemperaturaFundoPoco == 0) ) {
+		dataRow.createCell(1).setCellValue(longitudeDouble);
+		dataRow.createCell(2).setCellValue(latitudeDouble);
+		dataRow.createCell(3).setCellValue(bapDouble);
+		dataRow.createCell(4).setCellValue(maiorProfDouble);
+		
+		if(!(maiorTemperaturaFundoPoco == 0)  ||  !(maiorTemperaturaFundoPoco == 0.0)) {
 			dataRow.createCell(5).setCellValue(maiorTemperaturaFundoPoco);
 		}else {
 			dataRow.createCell(5).setCellValue("N/A");
@@ -468,6 +498,12 @@ public class App {
 		}
 		return str;
 	}
+	
+	private static String removerCaractereMenos(String texto) {
+	    // Remove o caractere "-" da string, se presente
+	    return texto.replace("-", "");
+	}
+
 
 	private static String filtrarLatitude(String linha) {
 		String latitude = null;
